@@ -1,0 +1,30 @@
+#### Vim related files.
+
+*.swp
+*.vim
+
+#### Python related files.
+
+.cache/
+*.pyc
+__pycache__/
+
+#### Folders to exclude.
+
+tmp/
+venv/
+.vscode/
+
+#### Database files.
+
+*.db
+*.dat
+*.zip
+
+#### Misc
+
+.DS_Store
+TODO.txt
+env.sh
+.env
+.fuse*
