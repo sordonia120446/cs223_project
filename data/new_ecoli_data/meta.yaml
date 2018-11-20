@@ -1,0 +1,5 @@
+summary:
+  - "Two data sets based on prof ground truth things"
+data:
+  - "`Genes_With_Start_Stop_Codon` only includes genes that had a start codon and a stop codon - so all hidden sequences include both 0's (non-coding) and 1's (coding)"
+  - "`Genes` includes all genes that either (1) had only a start codon (2) had neither a start or a stop codon (3) had both a start codon and stop codon. (1) and (2) basically have a hidden sequence of all 0's."

@@ -1,0 +1,5 @@
+first_attempt:
+  - summary:
+    - "Tried to get something working"
+  - challenges:
+    - "Could not use this because ground truth was not the entire sequence, only snippets"
