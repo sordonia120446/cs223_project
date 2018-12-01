@@ -1,7 +1,12 @@
-all: script
+.PHONY: all clean go wat
+
+all: go
+
+clean:
+	@rm data/model.txt
 
 go:
 	@python main.py
 
-script:
+wat:
 	@python scripts/tutorial.py

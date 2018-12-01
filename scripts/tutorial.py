@@ -72,7 +72,11 @@ def train(X):
 if __name__ == '__main__':
     X, Z = sampling()
     Z2 = train(X)
+    print('\nX')
+    print(X)
+    print('\nZ')
     print(Z)
+    print('\nZ2')
     print(Z2)
     print('\nNumber of matching predictions')
     print(len([z1 == z2 for z1, z2 in zip(Z, Z2) if z1 == z2]))

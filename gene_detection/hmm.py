@@ -1,7 +1,8 @@
 import copy
+import math
 
 import numpy as np
-from hmmlearn.hmm import GaussianHMM
+from hmmlearn.base import _BaseHMM
 
 
 class HiddenStates(object):
@@ -119,6 +120,36 @@ def _get_emission_matrix(observations, hidden_states):
     return emission_matrix
 
 
+def _format_init_probabilities(initial_probabilities):
+    mat = [
+        initial_probabilities[HiddenStates.NON_CODING],
+        initial_probabilities[HiddenStates.CODING],
+    ]
+    return np.array(mat)
+
+
+def _format_transition_matrix(transition_matrix):
+    mat = []
+    for hidden_state, state_transition in transition_matrix.items():
+        transitions = [
+            state_transition[HiddenStates.NON_CODING],
+            state_transition[HiddenStates.CODING],
+        ]
+        mat.append(transitions)
+    return np.array(mat)
+
+
+def _format_emission_matrix(emission_matrix):
+    mat = []
+    for hidden_state, state_transition in emission_matrix.items():
+        transitions = [
+            state_transition[HiddenStates.NON_CODING],
+            state_transition[HiddenStates.CODING],
+        ]
+        mat.append(transitions)
+    return np.array(mat)
+
+
 def init_model(observations, hidden_states, *args, **kwargs):
     # calculates the initial probability of the hidden sequence through the frequency
     # of each hidden state
@@ -134,49 +165,56 @@ def init_model(observations, hidden_states, *args, **kwargs):
     emission_matrix = _get_emission_matrix(observations, hidden_states)
 
     return {
-        'initial_probabilities': initial_probabilities,
-        'transition_matrix': transition_matrix,
+        'initial_probabilities': _format_init_probabilities(initial_probabilities),
+        'transition_matrix': _format_transition_matrix(transition_matrix),
         'emission_matrix': emission_matrix,
     }
 
 
-class GeneDetector(GaussianHMM):
-    """Container wrapper on HMM."""
+class GeneDetector(_BaseHMM):
+    """Custom transition and emission probabilities."""
 
-    def __init__(self, *args, **kwargs):
-        self.num_iterations = 100
-        self.model = GaussianHMM(
+    def __init__(self, emission_matrix, *args, **kwargs):
+        super().__init__(
             n_components=len(HiddenStates.STATES),
-            n_iter=self.num_iterations,
-            covariance_type="full",
+            algorithm='viterbi',
             *args, **kwargs)
-        self.model.n_features = 1
+        self.emission_matrix = emission_matrix
 
-    def _load_observations(self, observations):
-        converted_observations = []
-        for observation in observations:
-            converted_observations.append([observation_to_scalar(observation)])
-        ret = np.array(converted_observations)
-        return ret
+    def _check(self):
+        pass
 
-    def load_transition_matrix(self, transition_matrix):
+    def _compute_log_likelihood(self, X):
+        """Computes per-component log probability under the model.
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix of individual samples.
+        Returns
+        -------
+        logprob : array, shape (n_samples, n_components)
+            Log probability of each sample in ``X`` for each of the
+            model states.
+        """
         mat = []
-        for hidden_state, state_transition in transition_matrix.items():
-            transitions = [
-                state_transition[HiddenStates.NON_CODING],
-                state_transition[HiddenStates.CODING],
-            ]
-            mat.append(transitions)
-        self.model.transmat_ = np.array(mat)
-        return mat
+        for observation in X:
+            codon = ''.join(observation)
+            sample = []
+            for hidden_state, probabilities in self.emission_matrix.items():
+                # Default to log probability 0 if no match found
+                sample.append(math.log(probabilities.get(codon, 1)))
+            mat.append(sample)
+        return np.array(mat)
 
-    def run(self, observations):
-        observations = self._load_observations(observations)
-        self.model.fit(observations)
-        self.model.monitor_
-        output = self.model.predict(observations)
-        if self.model.monitor_.converged:
+    def train(self, observations):
+        self.fit(observations)
+        self.monitor_
+        output = self.predict(observations)
+        if self.monitor_.converged:
             print('Model has converged')
         else:
             print('Model has failed to converge over {} iterations'.format(self.num_iterations))
         return output
+
+    def test(self, observations):
+        return self.predict(observations)
