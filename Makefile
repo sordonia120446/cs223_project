@@ -1,12 +1,15 @@
 .PHONY: all clean go wat
 
-all: go
+all: build
 
 clean:
 	@rm data/model.txt
 
+build:
+	@bash setup.sh
+
 go:
 	@python main.py
 
-wat:
-	@python scripts/tutorial.py
+purge:
+	@rm -rf venv/
